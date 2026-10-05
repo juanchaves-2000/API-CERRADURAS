@@ -2,69 +2,79 @@ const express = require('express');
 const app = express();
 const port = 3000;
 
-// Middleware para que el servidor entienda el formato JSON
 app.use(express.json());
 
-// Base de datos simulada en memoria
 let usuarios = [];
 
 // ==========================================
-// 1. ENDPOINT POST: Registro de Usuarios (y Microchip)
+// 1. POST: Crear Usuario
 // ==========================================
 app.post('/api/usuarios/registro', (req, res) => {
   const { nombre, whatsapp, modulo_capacitacion } = req.body;
-
-  // Validación básica
   if (!nombre || !whatsapp) {
-    return res.status(400).json({ 
-      error: "Error: El nombre y el número de WhatsApp son obligatorios." 
-    });
+    return res.status(400).json({ error: "Faltan datos obligatorios." });
   }
 
-  // Lógica para el CHIP-JCCP2000
-  let detalleModulo = "Asignación estándar";
-  if (modulo_capacitacion === "CHIP-JCCP2000") {
-    detalleModulo = "¡Microchip inteligente de cerradura (CHIP-JCCP2000) asignado correctamente al usuario!";
-  }
-
-  // Creación del nuevo usuario
   const nuevoUsuario = {
-    id: usuarios.length + 1,
+    // Genera un ID secuencial seguro
+    id: usuarios.length > 0 ? usuarios[usuarios.length - 1].id + 1 : 1,
     nombre: nombre,
     whatsapp: whatsapp,
-    modulo_capacitacion: modulo_capacitacion || "No especificado",
-    fecha_registro: new Date().toISOString()
+    modulo_capacitacion: modulo_capacitacion || "No especificado"
   };
-
-  // Guardamos el usuario
+  
   usuarios.push(nuevoUsuario);
-
-  // Respuesta exitosa (Status 201)
-  res.status(201).json({
-    mensaje: "Usuario registrado con éxito en el sistema.",
-    detalle: detalleModulo,
-    datos: nuevoUsuario
-  });
+  res.status(201).json({ mensaje: "Usuario registrado", datos: nuevoUsuario });
 });
 
 // ==========================================
-// 2. ENDPOINT GET: Consultar Usuarios
+// 2. GET: Consultar Usuarios
 // ==========================================
 app.get('/api/usuarios', (req, res) => {
-  // Respuesta exitosa (Status 200)
-  res.status(200).json({
-    mensaje: "Lista de usuarios obtenida correctamente",
-    total: usuarios.length,
-    usuarios: usuarios
+  res.status(200).json({ total: usuarios.length, usuarios: usuarios });
+});
+
+// ==========================================
+// 3. PUT: Actualizar Datos de un Usuario
+// ==========================================
+app.put('/api/usuarios/:id', (req, res) => {
+  const idBuscado = parseInt(req.params.id); // Captura el ID de la URL
+  const { modulo_capacitacion } = req.body; // Dato a actualizar
+
+  const index = usuarios.findIndex(u => u.id === idBuscado);
+
+  if (index === -1) {
+    return res.status(404).json({ error: "Usuario no encontrado" });
+  }
+
+  // Actualizamos el módulo en la base de datos simulada
+  usuarios[index].modulo_capacitacion = modulo_capacitacion;
+
+  res.status(200).json({ 
+    mensaje: "Registro actualizado exitosamente", 
+    datos: usuarios[index] 
   });
 });
 
 // ==========================================
-// Iniciar el servidor
+// 4. DELETE: Borrar un Usuario
 // ==========================================
+app.delete('/api/usuarios/:id', (req, res) => {
+  const idBuscado = parseInt(req.params.id);
+  const index = usuarios.findIndex(u => u.id === idBuscado);
+
+  if (index === -1) {
+    return res.status(404).json({ error: "Usuario no encontrado" });
+  }
+
+  // Borramos al usuario de la lista
+  usuarios.splice(index, 1);
+
+  res.status(200).json({ 
+    mensaje: `El usuario con ID ${idBuscado} fue eliminado correctamente` 
+  });
+});
+
 app.listen(port, () => {
-  console.log(`✅ Servidor de pruebas ejecutándose en: http://localhost:${port}`);
-  console.log(`👉 Rutas disponibles para Postman:`);
-  console.log(`   - [POST] http://localhost:${port}/api/usuarios/registro`);
-  console.log(`   - [GET]  http://localhost:${port}/api/usuarios`);
+  console.log(`✅ Servidor CRUD ejecutándose en: http://localhost:${port}`);
 });
