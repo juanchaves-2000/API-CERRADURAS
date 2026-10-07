@@ -75,6 +75,28 @@ app.delete('/api/usuarios/:id', (req, res) => {
   });
 });
 
+// ==========================================
+// 5. GET: Buscar un Usuario Específico por ID
+// ==========================================
+app.get('/api/usuarios/:id', (req, res) => {
+  // Capturamos el ID que se envía en la URL
+  const idBuscado = parseInt(req.params.id);
+  
+  // Buscamos en nuestra lista un usuario que tenga ese mismo ID
+  const usuarioEncontrado = usuarios.find(u => u.id === idBuscado);
+
+  // Si no existe, devolvemos un error 404
+  if (!usuarioEncontrado) {
+    return res.status(404).json({ error: "Usuario no encontrado en el sistema" });
+  }
+
+  // Si existe, devolvemos los datos del usuario
+  res.status(200).json({ 
+    mensaje: "Usuario encontrado con éxito", 
+    datos: usuarioEncontrado 
+  });
+});
+
 app.listen(port, () => {
   console.log(`✅ Servidor CRUD ejecutándose en: http://localhost:${port}`);
 });
